@@ -30,6 +30,8 @@ services:
     depends_on:
       rabbit:
         condition: service_healthy
+      server:
+        condition: service_started 
     restart: on-failure
 
   server:

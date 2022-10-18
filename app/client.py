@@ -69,11 +69,11 @@ class Publisher:
 
 async def main() -> None:
     publisher = await Publisher().connect()
-    print("Requesting JSON")
+    print(" [x] Requesting JSON")
     response = await publisher.call()
-    print(f"Got {response.decode()!r}")
+    print(f" [x] Got {response.decode()!r}")
     await publisher.disconnect()
-
+    print(" [x] Connection closed")
 
 if __name__ == "__main__":
     asyncio.run(main())
