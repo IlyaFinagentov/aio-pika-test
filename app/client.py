@@ -1,5 +1,6 @@
 import asyncio
 import json
+import os
 import uuid
 from typing import MutableMapping
 
@@ -18,6 +19,7 @@ class Publisher:
     def __init__(self) -> None:
         self.futures: MutableMapping[str, asyncio.Future] = {}
         self.loop = asyncio.get_running_loop()
+        self.queue_name = os.environ.get('QUEUE_NAME')
         self.task = {
             "id": 1,
             "task_name": "some_task_name",
@@ -32,6 +34,10 @@ class Publisher:
         self.callback_queue = await self.channel.declare_queue(exclusive=True)
         await self.callback_queue.consume(self.on_response)
 
+        return self
+    
+    async def disconnect(self) -> "Publisher":
+        await self.channel.close()
         return self
 
     def on_response(self, message: AbstractIncomingMessage) -> None:
@@ -55,17 +61,18 @@ class Publisher:
                 correlation_id=correlation_id,
                 reply_to=self.callback_queue.name,
             ),
-            routing_key="rpc_queue",
+            routing_key=self.queue_name,
         )
 
         return await future
 
 
 async def main() -> None:
-    some_task = await Publisher().connect()
+    publisher = await Publisher().connect()
     print("Requesting JSON")
-    response = await some_task.call()
-    print(f"Got {response!r}")
+    response = await publisher.call()
+    print(f"Got {response.decode()!r}")
+    await publisher.disconnect()
 
 
 if __name__ == "__main__":

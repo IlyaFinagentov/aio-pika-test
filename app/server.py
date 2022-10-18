@@ -1,6 +1,7 @@
 import asyncio
 import json
 import logging
+import os
 import time
 from typing import Dict
 
@@ -12,7 +13,7 @@ def some_work(request: Dict) -> Dict:
         task_id = request.get("id", None)
         task_name = request.get("task_name", None)
         task_name = request.get("task_description", None)
-        time.sleep(3)
+        time.sleep(int(os.environ.get('SLEEP_TIME', 30)))
         return {
             "response_msg": "some response"
         }
@@ -22,13 +23,14 @@ def some_work(request: Dict) -> Dict:
 async def main() -> None:
     # Perform connection
     connection = await connect("amqp://guest:guest@rabbitmq/")
+    queue_name = os.environ.get('QUEUE_NAME')
 
     # Creating a channel
     channel = await connection.channel()
     exchange = channel.default_exchange
 
     # Declaring queue
-    queue = await channel.declare_queue("rpc_queue")
+    queue = await channel.declare_queue(queue_name)
 
     print(" [x] Awaiting RPC requests")
 

@@ -6,15 +6,15 @@ services:
     container_name: 'rabbitmq'
     hostname: 'rabbitmqhost'
     ports:
-        - 5672:5672
-        - 15672:15672
+      - 5672:5672
+      - 15672:15672
     volumes:
-        - ~/.docker-conf/rabbitmq/data/:/var/lib/rabbitmq/
-        - ~/.docker-conf/rabbitmq/log/:/var/log/rabbitmq
+      - ~/.docker-conf/rabbitmq/data/:/var/lib/rabbitmq/
+      - ~/.docker-conf/rabbitmq/log/:/var/log/rabbitmq
     healthcheck:
       test: rabbitmq-diagnostics -q ping
-      interval: 20s
-      timeout: 20s
+      interval: 15s
+      timeout: 15s
       retries: 3
 
 
@@ -22,8 +22,11 @@ services:
     container_name: 'client'
     environment:
       - PYTHONUNBUFFERED=1
-    build: .
-    command: python ./app/client.py
+      - QUEUE_NAME=queue_name
+    build:
+      context: .
+      dockerfile: client.Dockerfile
+    command: python ./client.py
     depends_on:
       rabbit:
         condition: service_healthy
@@ -33,13 +36,13 @@ services:
     container_name: 'server'
     environment:
       - PYTHONUNBUFFERED=1
-    build: .
-    command: python ./app/server.py
+      - QUEUE_NAME=queue_name
+      - SLEEP_TIME=30
+    build:
+      context: .
+      dockerfile: server.Dockerfile
+    command: python ./server.py
     depends_on:
         rabbit:
           condition: service_healthy
     restart: on-failure
-
-# networks:
-#   rabbit_net:
-#     driver: bridge
